@@ -1,11 +1,13 @@
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
+const Business = require('../models/Business');
 
 // Protect routes
 const protect = asyncHandler(async (req, res, next) => {
   const auth = req.headers.authorization;
-
+  console.log(auth);
+  
   if (!auth || !auth.startsWith('Bearer ')) {
     res.status(401);
     throw new Error('Not authorized, token missing');
@@ -16,7 +18,15 @@ const protect = asyncHandler(async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.id);
+    // Try finding in User
+    let user = await User.findById(decoded.id);
+
+    // If not found, try Business
+    if (!user) {
+      user = await Business.findById(decoded.id);
+    }
+
+    
     if (!user) {
       res.status(401);
       throw new Error('Not authorized, user not found');

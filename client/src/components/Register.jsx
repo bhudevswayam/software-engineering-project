@@ -1,18 +1,9 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { register  } from "../api/auth"; 
-import { login } from "../api/auth";
+import { register, login } from "../api/auth"; 
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useNavigate } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-} from "./ui/dropdown-menu";
-
 
 export function Register({ onSuccess }) {
   const [form, setForm] = useState({

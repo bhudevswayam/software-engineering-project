@@ -4,22 +4,23 @@ const Service = require('../models/Service');
 
 // create booking (user)
 const createBooking = asyncHandler(async (req, res) => {
-  const tenantId = req.tenantId;
+  // const tenantId = req.tenantId;
   const { serviceId, start } = req.body;
   if (!serviceId || !start) { res.status(400); throw new Error('Missing fields'); }
-  const service = await Service.findOne({ _id: serviceId, tenantId });
+  const service = await Service.findOne({ _id: serviceId });
   if (!service) { res.status(404); throw new Error('Service not found'); }
   const startDate = new Date(start);
   const endDate = new Date(startDate.getTime() + (service.durationMinutes || 60) * 60000);
-
+  const servicePrice = service.price || 0;
   const booking = await Booking.create({
-    tenantId,
-    service: service._id,
+    // tenantId,
     user: req.user._id,
+    service: service._id,
     business: service.business,
     start: startDate,
     end: endDate,
-    status: 'pending'
+    status: 'pending',
+    price: servicePrice
   });
   res.status(201).json(booking);
 });

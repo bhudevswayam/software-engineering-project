@@ -3,19 +3,46 @@ const Service = require('../models/Service');
 
 // create a service (business role)
 const createService = asyncHandler(async (req, res) => {
-  const tenantId = req.tenantId;
-  const { title, description, price, durationMinutes } = req.body;
-  if (!title || !price) {
+  const {
+    name,
+    category,
+    description,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
+    zipCode,
+    phoneNumber,
+    email,
+    priceRange,
+    businessHours
+  } = req.body;
+
+  if (!name || !priceRange) {
     res.status(400);
-    throw new Error('Missing fields');
+    throw new Error('Missing required fields: name or priceRange');
   }
+
   const service = await Service.create({
-    tenantId,
-    business: req.user._id,
-    title, description, price, durationMinutes
+    business: req.user._id,       // business owner
+    tenantId: req.user.tenantId,  // add tenantId from the logged-in business
+    name,
+    category,
+    description,
+    addressLine1,
+    addressLine2,
+    city,
+    state,
+    zipCode,
+    phoneNumber,
+    email,
+    priceRange,
+    businessHours
   });
+
   res.status(201).json(service);
 });
+
 
 const listServices = asyncHandler(async (req, res) => {
   const tenantId = req.tenantId;
