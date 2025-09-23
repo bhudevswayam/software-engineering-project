@@ -1,26 +1,18 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { register  } from "../api/auth"; // 👈 API call
-import {login} from "../api/auth";
+import { register, registerBusiness } from "../api/auth";
+import { login } from "../api/auth";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useNavigate } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-} from "./ui/dropdown-menu";
-
 
 export function RegisterBusiness({ onSuccess }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    role: "user", // default role
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -36,11 +28,8 @@ export function RegisterBusiness({ onSuccess }) {
       setError("");
 
       try {
-        const data  = await register(form) // axios returns { data }
-        console.log(data);
+        const data  = await registerBusiness(form) 
         
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("tenantId", "2"); // if you use tenantId
         await login({ email: form.email, password: form.password }); // update auth context with user + token
         loginUser(data);
         navigate("/"); // redirect home
@@ -55,7 +44,7 @@ export function RegisterBusiness({ onSuccess }) {
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-50">
       <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-4 text-center">Create an Account</h2>
+        <h2 className="text-2xl font-bold mb-4 text-center">Create a Business Account</h2>
 
         {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
 

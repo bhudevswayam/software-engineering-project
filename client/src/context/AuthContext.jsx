@@ -41,12 +41,14 @@ export const AuthProvider = ({ children }) => {
   
   const loginUser = (data) => {
     localStorage.setItem("token", data.token);
+    localStorage.setItem("x-tenant-id", data.tenantId || "");
     setUser(data);
   };
 
   const logoutUser = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("x-tenant-id");
     setUser(null);
   };
 

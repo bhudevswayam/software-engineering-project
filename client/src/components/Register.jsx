@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { register  } from "../api/auth"; // 👈 API call
-import {login} from "../api/auth";
+import { register  } from "../api/auth"; 
+import { login } from "../api/auth";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useNavigate } from "react-router-dom";
@@ -40,7 +40,7 @@ export function Register({ onSuccess }) {
         console.log(data);
         
         localStorage.setItem("token", data.token);
-        localStorage.setItem("tenantId", "1"); // if you use tenantId
+
         await login({ email: form.email, password: form.password }); // update auth context with user + token
         loginUser(data);
         navigate("/"); // redirect home
