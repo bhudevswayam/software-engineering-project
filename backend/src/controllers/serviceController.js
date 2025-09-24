@@ -1,8 +1,9 @@
 const asyncHandler = require('express-async-handler');
 const Service = require('../models/Service');
-
+const Business = require('../models/Business');
 // create a service (business role)
 const createService = asyncHandler(async (req, res) => {
+
   const {
     name,
     category,
@@ -22,6 +23,13 @@ const createService = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('Missing required fields: name or priceRange');
   }
+  const businessId = req.user._id;
+  // // find the business
+  const business = await Business.findById(businessId);
+  if (!business) {
+    res.status(404);
+    throw new Error("Business not found");
+  }
 
   const service = await Service.create({
     business: req.user._id,       // business owner
@@ -39,6 +47,9 @@ const createService = asyncHandler(async (req, res) => {
     priceRange,
     businessHours
   });
+
+  business.services.push(service._id);
+  await business.save();
 
   res.status(201).json(service);
 });

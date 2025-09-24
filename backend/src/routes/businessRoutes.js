@@ -7,6 +7,8 @@ const {
   updateBusiness,
   deleteBusiness,
   bulkDeleteBusinesses,
+  getBusinessServices,
+  getBusinessServiceById,
 } = require("../controllers/businessController");
 
 const { protect, authorize } = require("../middleware/auth");
@@ -34,5 +36,9 @@ router.delete("/:id", authorize('business'), deleteBusiness);
 
 // Bulk delete businesses
 router.delete("/", authorize('business'), bulkDeleteBusinesses);
+
+// services for a business
+router.get("/:id/services", authorize("business"), getBusinessServices);
+router.get("/:businessId/services/:serviceId", authorize("business"), getBusinessServiceById);
 
 module.exports = router;

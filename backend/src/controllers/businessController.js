@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const Business = require("../models/Business");
+const Service = require("../models/Service");
 
 // @desc    Create a new business
 // @route   POST /business
@@ -38,29 +39,17 @@ const createBusiness = asyncHandler(async (req, res) => {
   res.status(201).json(business);
 });
 
-// @desc    Get all businesses (with optional search/filter)
+// @desc    Get all businesses
 // @route   GET /business
 // @access  Tenant admin
 const getBusinesses = asyncHandler(async (req, res) => {
-  const tenantId = req.tenantId;
-  const { search } = req.query;
-
-  let filter = { tenantId };
-
-  if (search) {
-    // search by name or email
-    filter.$or = [
-      { name: { $regex: search, $options: "i" } },
-      { email: { $regex: search, $options: "i" } },
-    ];
-  }
-
-  const businesses = await Business.find(filter)
+   const businesses = await Business.find()
     .populate("services")
-    .populate("clients", "name email");
 
   res.json(businesses);
 });
+
+
 
 // @desc    Get business by ID
 // @route   GET /business/:id
@@ -68,8 +57,8 @@ const getBusinesses = asyncHandler(async (req, res) => {
 const getBusinessById = asyncHandler(async (req, res) => {
   const tenantId = req.tenantId;
   const business = await Business.findOne({ _id: req.params.id, tenantId })
-    .populate("services")
-    .populate("clients", "name email");
+    // .populate("services")
+    // .populate("clients", "name email");
 
   if (!business) {
     res.status(404);
@@ -143,6 +132,45 @@ const bulkDeleteBusinesses = asyncHandler(async (req, res) => {
   res.json({ message: `${result.deletedCount} businesses deleted` });
 });
 
+// @desc    Get all services of a business
+// @route   GET /business/:id/services
+// @access  Tenant admin
+const getBusinessServices = asyncHandler(async (req, res) => {
+  const tenantId = req.tenantId;
+  const businessId = req.params.id;
+
+  // Ensure business exists under this tenant
+  const business = await Business.findOne({ _id: businessId, tenantId });
+  if (!business) {
+    res.status(404);
+    throw new Error("Business not found in your tenant");
+  }
+
+  const services = await Service.find({ business: businessId, tenantId });
+  res.json(services);
+});
+
+// @desc    Get single service under a business
+// @route   GET /business/:businessId/services/:serviceId
+// @access  Tenant admin
+const getBusinessServiceById = asyncHandler(async (req, res) => {
+  const tenantId = req.tenantId;
+  const { businessId, serviceId } = req.params;
+
+  const service = await Service.findOne({
+    _id: serviceId,
+    business: businessId,
+    tenantId,
+  });
+
+  if (!service) {
+    res.status(404);
+    throw new Error("Service not found for this business in your tenant");
+  }
+
+  res.json(service);
+});
+
 module.exports = {
   createBusiness,
   getBusinesses,
@@ -150,4 +178,6 @@ module.exports = {
   updateBusiness,
   deleteBusiness,
   bulkDeleteBusinesses,
+  getBusinessServices,
+  getBusinessServiceById,
 };
