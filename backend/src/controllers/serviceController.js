@@ -57,11 +57,45 @@ const createService = asyncHandler(async (req, res) => {
 
 const listServices = asyncHandler(async (req, res) => {
   const tenantId = req.tenantId;
-  const { business } = req.query;
+  
+  // Get pagination parameters
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  
+  // Get filter parameters
+  const { business, category } = req.query;
+  
+  // Build filter object
   const filter = { tenantId, active: true };
   if (business) filter.business = business;
-  const services = await Service.find(filter).populate('business', 'name email');
-  res.json(services);
+  if (category) filter.category = category;
+  
+  // Calculate skip value for pagination
+  const skip = (page - 1) * limit;
+  
+  // Get total count for pagination metadata
+  const totalItems = await Service.countDocuments(filter);
+  const totalPages = Math.ceil(totalItems / limit);
+  
+  // Fetch paginated services
+  const services = await Service.find(filter)
+    .populate('business', 'name email')
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+  
+  // Send response with pagination metadata
+  res.json({
+    services,
+    pagination: {
+      totalItems,
+      totalPages,
+      currentPage: page,
+      itemsPerPage: limit,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1
+    }
+  });
 });
 
 const getService = asyncHandler(async (req, res) => {
