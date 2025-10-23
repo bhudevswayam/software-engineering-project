@@ -1,153 +1,167 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
-import { Badge } from "./ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { Building, Plus, Edit, Trash2, MapPin, Phone, Mail, Star, Clock, DollarSign } from "lucide-react";
-
-const mockBusinesses = [
-  {
-    id: "1",
-    name: "CleanPro Services",
-    category: "Home Cleaning",
-    description: "Professional home cleaning services with eco-friendly products. We provide deep cleaning, regular maintenance, and specialized services.",
-    location: "New York, NY",
-    phone: "+1 (555) 123-4567",
-    email: "contact@cleanpro.com",
-    rating: 4.8,
-    priceRange: "$50-150",
-    hours: "Mon-Sat: 8AM-6PM",
-    status: "active",
-    services: ["Deep Cleaning", "Regular Cleaning", "Move-in/Move-out", "Office Cleaning"]
-  },
-  {
-    id: "2",
-    name: "QuickFix Plumbing",
-    category: "Plumbing",
-    description: "Emergency and scheduled plumbing services. Licensed and insured professionals available 24/7.",
-    location: "Brooklyn, NY",
-    phone: "+1 (555) 987-6543",
-    email: "info@quickfixplumbing.com",
-    rating: 4.6,
-    priceRange: "$80-200",
-    hours: "24/7 Emergency Service",
-    status: "active",
-    services: ["Emergency Repairs", "Installation", "Maintenance", "Drain Cleaning"]
-  }
-];
+import { useEffect, useState } from "react";
+import {
+  getServices,
+  createService,
+  updateService,
+  deleteService,
+} from "@/api/service"; // ✅ FIXED import path
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Building,
+  Plus,
+  Edit,
+  Trash2,
+  MapPin,
+  Phone,
+  Mail,
+  Star,
+  Clock,
+  DollarSign,
+} from "lucide-react";
 
 const categories = [
-  "Home Cleaning", "Plumbing", "Legal Services", "Accounting", "Beauty & Wellness", 
-  "Home Repair", "Tutoring", "Pet Care", "Catering", "Photography"
+  "Home Cleaning",
+  "Plumbing",
+  "Legal Services",
+  "Accounting",
+  "Beauty & Wellness",
+  "Home Repair",
+  "Tutoring",
+  "Pet Care",
+  "Catering",
+  "Photography",
 ];
 
 export function BusinessProfile() {
-  const [businesses, setBusinesses] = useState(mockBusinesses);
+  const [businesses, setBusinesses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isAddingBusiness, setIsAddingBusiness] = useState(false);
   const [editingBusiness, setEditingBusiness] = useState(null);
   const [newBusiness, setNewBusiness] = useState({
     name: "",
     category: "",
     description: "",
-    location: "",
-    phone: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    phoneNumber: "",
     email: "",
     priceRange: "",
-    hours: "",
-    services: []
+    businessHours: "",
   });
 
-  const handleAddBusiness = () => {
-    if (newBusiness.name && newBusiness.category) {
-      const business = {
-        id: Date.now().toString(),
-        name: newBusiness.name || "",
-        category: newBusiness.category || "",
-        description: newBusiness.description || "",
-        location: newBusiness.location || "",
-        phone: newBusiness.phone || "",
-        email: newBusiness.email || "",
-        rating: 0,
-        priceRange: newBusiness.priceRange || "",
-        hours: newBusiness.hours || "",
-        status: "active",
-        services: newBusiness.services || []
+  // ✅ Fetch all businesses on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getServices();
+        setBusinesses(data);
+      } catch (err) {
+        console.error("Failed to load businesses:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // ✅ Add or update
+  const handleSaveBusiness = async () => {
+    try {
+      const payload = {
+        ...newBusiness,
+        business: JSON.parse(localStorage.getItem("user"))?.id || "", 
+        tenantId: localStorage.getItem("x-tenant-id"),
       };
-      setBusinesses([...businesses, business]);
-      setNewBusiness({
-        name: "",
-        category: "",
-        description: "",
-        location: "",
-        phone: "",
-        email: "",
-        priceRange: "",
-        hours: "",
-        services: []
-      });
+
+      if (editingBusiness) {
+        const updated = await updateService(editingBusiness._id, payload);
+        setBusinesses((prev) =>
+          prev.map((b) => (b._id === editingBusiness._id ? updated : b))
+        );
+      } else {
+        const created = await createService(payload);
+        setBusinesses((prev) => [...prev, created]);
+      }
+
       setIsAddingBusiness(false);
-    }
-  };
-
-  const handleEditBusiness = (business) => {
-    setEditingBusiness(business);
-    setNewBusiness(business);
-    setIsAddingBusiness(true);
-  };
-
-  const handleUpdateBusiness = () => {
-    if (editingBusiness && newBusiness.name && newBusiness.category) {
-      const updatedBusiness = {
-        ...editingBusiness,
-        name: newBusiness.name || "",
-        category: newBusiness.category || "",
-        description: newBusiness.description || "",
-        location: newBusiness.location || "",
-        phone: newBusiness.phone || "",
-        email: newBusiness.email || "",
-        priceRange: newBusiness.priceRange || "",
-        hours: newBusiness.hours || "",
-        services: newBusiness.services || []
-      };
-      setBusinesses(businesses.map(b => b.id === editingBusiness.id ? updatedBusiness : b));
       setEditingBusiness(null);
       setNewBusiness({
         name: "",
         category: "",
         description: "",
-        location: "",
-        phone: "",
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        phoneNumber: "",
         email: "",
         priceRange: "",
-        hours: "",
-        services: []
+        businessHours: "",
       });
-      setIsAddingBusiness(false);
+    } catch (err) {
+      console.error("Failed to save business:", err);
     }
   };
 
-  const handleDeleteBusiness = (id) => {
-    setBusinesses(businesses.filter(b => b.id !== id));
+  // ✅ Delete
+  const handleDeleteBusiness = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this business?")) return;
+    try {
+      await deleteService(id);
+      setBusinesses((prev) => prev.filter((b) => b._id !== id));
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
   };
 
-  const toggleStatus = (id) => {
-    setBusinesses(businesses.map(b => 
-      b.id === id ? { ...b, status: b.status === "active" ? "inactive" : "active" } : b
-    ));
-  };
-
-  const renderStars = (rating) => {
-    return Array.from({ length: 5 }, (_, i) => (
+  const renderStars = (rating) =>
+    Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`h-4 w-4 ${i < Math.floor(rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+        className={`h-4 w-4 ${
+          i < Math.floor(rating || 0)
+            ? "fill-yellow-400 text-yellow-400"
+            : "text-gray-300"
+        }`}
       />
     ));
-  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-20">
+        <p>Loading businesses...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -155,8 +169,12 @@ export function BusinessProfile() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl mb-2">Manage Business</h1>
-            <p className="text-muted-foreground">Add, edit, and manage your business listings</p>
+            <p className="text-muted-foreground">
+              Add, edit, and manage your business listings
+            </p>
           </div>
+
+          {/* Add Business Dialog */}
           <Dialog open={isAddingBusiness} onOpenChange={setIsAddingBusiness}>
             <DialogTrigger asChild>
               <Button>
@@ -170,115 +188,92 @@ export function BusinessProfile() {
                   {editingBusiness ? "Edit Business" : "Add New Business"}
                 </DialogTitle>
                 <DialogDescription>
-                  {editingBusiness ? "Update your business information" : "Create a new business listing"}
+                  {editingBusiness
+                    ? "Update your business information"
+                    : "Create a new business listing"}
                 </DialogDescription>
               </DialogHeader>
+
+              {/* ✅ Form Fields */}
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="business-name">Business Name</Label>
-                    <Input
-                      id="business-name"
-                      value={newBusiness.name || ""}
-                      onChange={(e) => setNewBusiness({ ...newBusiness, name: e.target.value })}
-                      placeholder="Enter business name"
-                    />
+                {[
+                  { id: "name", label: "Business Name *" },
+                  { id: "category", label: "Category", select: true },
+                  { id: "description", label: "Description", textarea: true },
+                  { id: "addressLine1", label: "Address Line 1" },
+                  { id: "addressLine2", label: "Address Line 2" },
+                  { id: "city", label: "City" },
+                  { id: "state", label: "State" },
+                  { id: "zipCode", label: "Zip Code", type: "number" },
+                  { id: "phoneNumber", label: "Phone Number", type: "number" },
+                  { id: "email", label: "Email", type: "email" },
+                  { id: "priceRange", label: "Price", type: "number" },
+                  { id: "businessHours", label: "Business Hours" },
+                ].map((field) => (
+                  <div key={field.id} className="space-y-2">
+                    <Label htmlFor={field.id}>{field.label}</Label>
+                    {field.select ? (
+                      <Select
+                        value={newBusiness.category || ""}
+                        onValueChange={(value) =>
+                          setNewBusiness({ ...newBusiness, category: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : field.textarea ? (
+                      <Textarea
+                        id={field.id}
+                        value={newBusiness[field.id] || ""}
+                        onChange={(e) =>
+                          setNewBusiness({
+                            ...newBusiness,
+                            [field.id]: e.target.value,
+                          })
+                        }
+                        placeholder="Describe your business"
+                        rows={3}
+                      />
+                    ) : (
+                      <Input
+                        id={field.id}
+                        type={field.type || "text"}
+                        value={newBusiness[field.id] || ""}
+                        onChange={(e) =>
+                          setNewBusiness({
+                            ...newBusiness,
+                            [field.id]: e.target.value,
+                          })
+                        }
+                        placeholder={`Enter ${field.label.toLowerCase()}`}
+                      />
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select
-                      value={newBusiness.category || ""}
-                      onValueChange={(value) => setNewBusiness({ ...newBusiness, category: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={newBusiness.description || ""}
-                    onChange={(e) => setNewBusiness({ ...newBusiness, description: e.target.value })}
-                    placeholder="Describe your business and services"
-                    rows={3}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      value={newBusiness.location || ""}
-                      onChange={(e) => setNewBusiness({ ...newBusiness, location: e.target.value })}
-                      placeholder="City, State"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      value={newBusiness.phone || ""}
-                      onChange={(e) => setNewBusiness({ ...newBusiness, phone: e.target.value })}
-                      placeholder="+1 (555) 123-4567"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={newBusiness.email || ""}
-                      onChange={(e) => setNewBusiness({ ...newBusiness, email: e.target.value })}
-                      placeholder="contact@business.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="price-range">Price Range</Label>
-                    <Input
-                      id="price-range"
-                      value={newBusiness.priceRange || ""}
-                      onChange={(e) => setNewBusiness({ ...newBusiness, priceRange: e.target.value })}
-                      placeholder="$50-150"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hours">Business Hours</Label>
-                  <Input
-                    id="hours"
-                    value={newBusiness.hours || ""}
-                    onChange={(e) => setNewBusiness({ ...newBusiness, hours: e.target.value })}
-                    placeholder="Mon-Fri: 9AM-5PM"
-                  />
-                </div>
+                ))}
               </div>
+
               <DialogFooter>
-                <Button 
-                  onClick={editingBusiness ? handleUpdateBusiness : handleAddBusiness}
-                  disabled={!newBusiness.name || !newBusiness.category}
-                >
-                  {editingBusiness ? "Update Business" : "Add Business"}
+                <Button onClick={handleSaveBusiness}>
+                  {editingBusiness ? "Update Business" : "Create Business"}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
 
+        {/* ✅ Business List */}
         {businesses.length === 0 ? (
           <Card>
-            <CardContent className="pt-6 text-center py-12">
+            <CardContent className="text-center py-12">
               <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">No businesses yet</h3>
               <p className="text-muted-foreground mb-4">
@@ -292,18 +287,24 @@ export function BusinessProfile() {
           </Card>
         ) : (
           <div className="grid gap-6">
-            {businesses.map((business) => (
-              <Card key={business.id} className="hover:shadow-md transition-shadow">
+            {businesses.map((b) => (
+              <Card key={b._id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <Building className="h-6 w-6 text-primary" />
                       <div>
-                        <CardTitle>{business.name}</CardTitle>
+                        <CardTitle>{b.name}</CardTitle>
                         <div className="flex items-center space-x-2 mt-1">
-                          <Badge variant="secondary">{business.category}</Badge>
-                          <Badge className={business.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
-                            {business.status}
+                          <Badge variant="secondary">{b.category}</Badge>
+                          <Badge
+                            className={
+                              b.active
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }
+                          >
+                            {b.active ? "active" : "inactive"}
                           </Badge>
                         </div>
                       </div>
@@ -312,22 +313,19 @@ export function BusinessProfile() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleEditBusiness(business)}
+                        onClick={() => {
+                          setEditingBusiness(b);
+                          setNewBusiness(b);
+                          setIsAddingBusiness(true);
+                        }}
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
                       </Button>
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toggleStatus(business.id)}
-                      >
-                        {business.status === "active" ? "Deactivate" : "Activate"}
-                      </Button>
-                      <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDeleteBusiness(business.id)}
+                        onClick={() => handleDeleteBusiness(b._id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -337,57 +335,40 @@ export function BusinessProfile() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                      <p className="text-gray-600">{business.description}</p>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2 text-sm">
+                      <p className="text-gray-600">{b.description}</p>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center space-x-2">
                           <MapPin className="h-4 w-4 text-gray-500" />
-                          <span>{business.location}</span>
+                          <span>
+                            {b.addressLine1}, {b.city}, {b.state}
+                          </span>
                         </div>
-                        <div className="flex items-center space-x-2 text-sm">
+                        <div className="flex items-center space-x-2">
                           <Phone className="h-4 w-4 text-gray-500" />
-                          <span>{business.phone}</span>
+                          <span>{b.phoneNumber}</span>
                         </div>
-                        <div className="flex items-center space-x-2 text-sm">
+                        <div className="flex items-center space-x-2">
                           <Mail className="h-4 w-4 text-gray-500" />
-                          <span>{business.email}</span>
+                          <span>{b.email}</span>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-4">
                       <div className="flex items-center space-x-2">
-                        <div className="flex items-center space-x-1">
-                          {renderStars(business.rating)}
-                        </div>
-                        <span className="text-sm text-gray-600">
-                          {business.rating > 0 ? `(${business.rating})` : "No ratings yet"}
-                        </span>
+                        {renderStars(4.5)}
+                        <span className="text-sm text-gray-600">(4.5)</span>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2 text-sm">
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center space-x-2">
                           <DollarSign className="h-4 w-4 text-gray-500" />
-                          <span>{business.priceRange}</span>
+                          <span>{b.priceRange}</span>
                         </div>
-                        <div className="flex items-center space-x-2 text-sm">
+                        <div className="flex items-center space-x-2">
                           <Clock className="h-4 w-4 text-gray-500" />
-                          <span>{business.hours}</span>
+                          <span>{b.businessHours}</span>
                         </div>
                       </div>
-                      
-                      {business.services.length > 0 && (
-                        <div>
-                          <p className="text-sm font-medium mb-2">Services:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {business.services.map((service, index) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {service}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </CardContent>

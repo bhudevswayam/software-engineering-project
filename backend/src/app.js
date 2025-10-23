@@ -6,7 +6,7 @@ const authRoutes = require('./routes/auth');
 const serviceRoutes = require('./routes/services');
 const bookingRoutes = require('./routes/bookings');
 const adminRoutes = require('./routes/admin');
-const businessRoutes = require('./routes/businessRoutes'); // 👈 add this
+const businessRoutes = require('./routes/businessRoutes'); 
 const errorHandler = require('./middleware/errorHandler');
 const userRoutes = require("./routes/userRoutes");
 

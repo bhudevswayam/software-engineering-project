@@ -21,6 +21,7 @@ export default function Login({ onSuccess }) {
     
     localStorage.setItem("token", data.token); // save token
     localStorage.setItem("user", JSON.stringify(data)); // save user info
+    localStorage.setItem("x-tenant-id", data.tenantId); // save tenant ID
     loginUser(data); // update context
 
     navigate("/"); 

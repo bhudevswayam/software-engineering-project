@@ -3,50 +3,54 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Star, MapPin, Clock, CheckCircle } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-
-const featuredBusinesses = [
-  {
-    id: 1,
-    name: "CleanPro Services",
-    category: "Home Cleaning",
-    rating: 4.9,
-    reviewCount: 247,
-    location: "Downtown Area",
-    image: "https://images.unsplash.com/photo-1581578949510-fa7315c4c350?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxob3VzZSUyMGNsZWFuaW5nJTIwc2VydmljZXxlbnwxfHx8fDE3NTc2MDI2NDJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    price: "Starting at $49",
-    responseTime: "2 hrs",
-    verified: true,
-    specialties: ["Deep Cleaning", "Regular Maintenance", "Move-in/out"]
-  },
-  {
-    id: 2,
-    name: "Legal Advisors LLC",
-    category: "Legal Services",
-    rating: 4.8,
-    reviewCount: 156,
-    location: "Business District",
-    image: "https://images.unsplash.com/photo-1598139384902-5a8217874645?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsZWdhbCUyMGNvbnN1bHRhdGlvbnxlbnwxfHx8fDE3NTc2MjY2MjF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    price: "Starting at $150",
-    responseTime: "4 hrs",
-    verified: true,
-    specialties: ["Corporate Law", "Real Estate", "Family Law"]
-  },
-  {
-    id: 3,
-    name: "TaxMaster Accounting",
-    category: "Accounting",
-    rating: 4.7,
-    reviewCount: 89,
-    location: "Midtown",
-    image: "https://images.unsplash.com/photo-1563212034-a3c52118cce2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhY2NvdW50aW5nJTIwZmluYW5jZXxlbnwxfHx8fDE3NTc2MjY2MjF8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-    price: "Starting at $75",
-    responseTime: "6 hrs",
-    verified: true,
-    specialties: ["Tax Filing", "Bookkeeping", "Financial Planning"]
-  }
-];
+import { getAllServices } from "../api/service";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function FeaturedBusinesses() {
+  const [featuredBusinesses, setFeaturedBusinesses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const handleBookNow = (id) => {
+    navigate(`/service-detail/${id}`); // ✅ Navigate with ID in URL
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const services = await getAllServices(); // Fetch services from API
+        // Transform backend data to match UI structure if required
+        const formatted = services.map((service) => ({
+          id: service._id,
+          name: service.name,
+          category: service.category || "General",
+          location: service.city && service.state ? `${service.city}, ${service.state}` : "N/A",
+          price: service.priceRange ? `$${service.priceRange}` : "Pricing not available",
+
+          // Since these are not in backend yet, use placeholders
+          image: service.image || "https://via.placeholder.com/400x300?text=No+Image",
+          rating: service.rating || 4.5,      // dummy until you add ratings
+          reviewCount: service.reviewCount || 10, // dummy
+          responseTime: service.responseTime || "1 hour", // dummy
+          verified: service.business ? true : false, // assumes business = verified
+          specialties: service.specialties || [], // if not available, empty array
+        }));
+
+
+        setFeaturedBusinesses(formatted);
+      } catch (error) {
+        console.error("Error fetching services:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) return <p>Loading...</p>;
+
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
@@ -113,7 +117,9 @@ export function FeaturedBusinesses() {
 
                   <div className="flex items-center justify-between pt-4 border-t">
                     <span className="font-medium">{business.price}</span>
-                    <Button size="sm">Book Now</Button>
+                    <Button size="sm" onClick={() => handleBookNow(business.id)}>
+                      Book Now
+                    </Button>
                   </div>
                 </div>
               </CardContent>

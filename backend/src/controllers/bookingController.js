@@ -26,21 +26,32 @@ const createBooking = asyncHandler(async (req, res) => {
 });
 
 // list bookings (different views)
+// ✅ List all bookings for logged-in user
 const listBookings = asyncHandler(async (req, res) => {
-  const tenantId = req.tenantId;
-  const filter = { tenantId };
+  try {
+    const userId = req.user._id; // from JWT token
 
-  if (req.user.role === 'user') filter.user = req.user._id;
-  else if (req.user.role === 'business' || req.user.role === 'admin') filter.business = req.user._id;
-  // superadmin sees all
+    if (!userId) {
+      return res.status(400).json({ message: "User not authenticated" });
+    }
 
-  const bookings = await Booking.find(filter)
-    .populate('service')
-    .populate('user', 'name email')
-    .populate('business', 'name email');
+    // Find all bookings that belong to this user
+    const bookings = await Booking.find({ user: userId })
+      .populate("service", "name priceRange") // return only required service fields
+      .populate("business", "name email") // optional
+      .sort({ createdAt: -1 }); // latest first
 
-  res.json(bookings);
+    if (!bookings || bookings.length === 0) {
+      return res.status(404).json({ message: "No bookings found for this user" });
+    }
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    res.status(500).json({ message: "Server error fetching bookings" });
+  }
 });
+
 
 const updateBookingStatus = asyncHandler(async (req, res) => {
   const booking = await Booking.findOne({ _id: req.params.id, tenantId: req.tenantId });
