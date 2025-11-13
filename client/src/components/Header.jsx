@@ -114,7 +114,8 @@ export function Header({ currentPage, onNavigate }) {
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
                 </DropdownMenuItem>
-              </DropdownMenuContent>
+                <DropdownMenuItem onClick={() => navigate("/support")}>Support</DropdownMenuItem>
+</DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <div className="flex items-center space-x-4">

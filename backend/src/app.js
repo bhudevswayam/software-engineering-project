@@ -9,6 +9,7 @@ const adminRoutes = require('./routes/admin');
 const businessRoutes = require('./routes/businessRoutes'); 
 const errorHandler = require('./middleware/errorHandler');
 const userRoutes = require("./routes/userRoutes");
+const supportRoutes = require('./routes/support');
 
 const app = express();
 
@@ -23,6 +24,8 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/business', businessRoutes); 
 app.use("/api/users", userRoutes);
+
+app.use('/api/support', supportRoutes);
 
 // Health check
 app.get('/health', (req, res) => res.json({ ok: true }));

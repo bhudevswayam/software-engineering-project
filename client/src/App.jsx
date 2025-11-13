@@ -1,3 +1,4 @@
+import SupportHome from "./features/support/pages/Home";
 import { useState } from "react";
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
@@ -54,7 +55,8 @@ export default function App() {
 
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+        <Route path="/support" element={<SupportHome />} />
+</Routes>
 
       <Footer />
     </div>
