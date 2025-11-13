@@ -1,39 +1,159 @@
-import { MapPin } from 'lucide-react';
+import { Button } from "./ui/button";
+import { Search, Menu, MapPin, User, Calendar, Building, LogOut, LifeBuoy } from "lucide-react";
+import { Input } from "./ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
-export function Header() {
+import { useAuth } from "../context/AuthContext";
+import { useNavigate, useLocation } from "react-router-dom";
+
+export function Header({ currentPage, onNavigate }) {
+  const { user, logoutUser } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getUserInitials = (name = "") =>
+    name
+      .split(" ")
+      .map((w) => w.charAt(0).toUpperCase())
+      .join("")
+      .slice(0, 2);
+
+  const isHome = location.pathname === "/";
+
   return (
-    <header className="bg-white border-b border-gray-200">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between max-w-7xl">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-black rounded-md flex items-center justify-center">
-            <span className="text-white">S</span>
+    <header className="w-full border-b bg-white sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        {/* Logo */}
+        <div
+          className="flex items-center space-x-2 cursor-pointer"
+          onClick={() => navigate("/")}
+        >
+          <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+            <span className="text-primary-foreground">S</span>
           </div>
-          <span className="tracking-tight">ServiceHub</span>
+          <span className="text-xl font-medium">ServiceHub</span>
         </div>
 
-        <div className="hidden md-center gap-2 text-gray-500 text-sm">
-          <MapPin className="w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Enter location"
-            className="border-none outline-none bg-transparent text-gray-600 placeholder-gray-400"
-          />
-        </div>
+        {/* Location input only on home */}
+        {isHome && (
+          <div className="hidden md:flex items-center space-x-2 bg-gray-50 rounded-lg px-3 py-2 min-w-[300px]">
+            <MapPin className="h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Enter location"
+              className="border-0 bg-transparent text-sm placeholder:text-gray-500 focus-visible:ring-0"
+            />
+          </div>
+        )}
 
-        <nav className="flex items-center gap-4">
-          <button className="text-sm hover-gray-600 transition-colors">
-            Home
-          </button>
-          <button className="text-sm hover-gray-600 transition-colors px-4 py-2 border border-gray-300 rounded-md">
-            Login
-          </button>
-          <button className="text-sm hover-gray-600 transition-colors px-4 py-2 border border-gray-300 rounded-md">
-            Sign Up
-          </button>
-          <button className="text-sm text-white bg-black px-4 py-2 rounded-md hover-gray-800 transition-colors">
-            Register
-          </button>
-        </nav>
+        {/* Right nav */}
+        <div className="flex items-center space-x-4">
+          {/* Desktop menu */}
+          <div className="hidden md:flex items-center space-x-6">
+            <button
+              onClick={() => navigate("/")}
+              className={`hover:text-primary transition-colors ${isHome ? "text-primary" : ""}`}
+            >
+              Home
+            </button>
+
+            {user && (
+              <>
+                <button
+                  onClick={() => navigate("/bookings")}
+                  className={`hover:text-primary transition-colors flex items-center space-x-1 ${
+                    location.pathname === "/bookings" ? "text-primary" : ""
+                  }`}
+                >
+                  <Calendar className="h-4 w-4" />
+                  <span>My Bookings</span>
+                </button>
+
+                {user.role === "business" && (
+                  <button
+                    onClick={() => navigate("/business")}
+                    className={`hover:text-primary transition-colors flex items-center space-x-1 ${
+                      location.pathname === "/business" ? "text-primary" : ""
+                    }`}
+                  >
+                    <Building className="h-4 w-4" />
+                    <span>Manage Business</span>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Auth buttons / User dropdown */}
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                  {getUserInitials(user.name)}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <p className="font-medium p-3">{user.name}</p>
+                <DropdownMenuSeparator />
+
+                {/* Profile */}
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+
+                {/* Support (directly under Profile, with icon) */}
+                <DropdownMenuItem onClick={() => navigate("/support")}>
+                  <LifeBuoy className="mr-2 h-4 w-4" />
+                  <span>Support</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                {/* Sign out */}
+                <DropdownMenuItem
+                  onClick={() => {
+                    logoutUser();
+                    navigate("/login");
+                  }}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                className="border border-primary"
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </Button>
+              <Button
+                onClick={() => navigate("/register")}
+                className="border border-primary text-primary bg-transparent hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                Sign Up
+              </Button>
+              <Button onClick={() => navigate("/register-business")}>
+                Register as Business
+              </Button>
+            </div>
+          )}
+
+          {/* Mobile menu */}
+          <Button variant="ghost" size="sm" className="md:hidden">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
     </header>
   );
