@@ -29,17 +29,6 @@ export default function App() {
       status: 'in-progress',
       createdAt: new Date('2025-11-09T14:20:00'),
     },
-    {
-      id: '3',
-      name: 'Mike Johnson',
-      email: 'mike@example.com',
-      subject: 'Feature Request',
-      description: 'Would love to see dark mode support',
-      priority: 'low',
-      category: 'Tech Support',
-      status: 'open',
-      createdAt: new Date('2025-11-08T09:15:00'),
-    },
   ]);
 
   const [activeTab, setActiveTab] = useState('create');
