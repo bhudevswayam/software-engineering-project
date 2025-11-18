@@ -13,6 +13,7 @@ import { Register } from "./components/Register"; // 👈 add register component
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";  // 👈 use auth context
 import { RegisterBusiness } from "./components/RegisterBusiness";
+import ServiceDetail from './components/ServiceDetail';
 
 export default function App() {
   const { user, loading, logoutUser } = useAuth();
@@ -36,6 +37,16 @@ export default function App() {
         <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
         <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
         <Route path="/register-business" element={user ? <Navigate to="/" /> : <RegisterBusiness />} />
+        <Route path="/service-detail/:id" element={<ServiceDetail />} />
+
+        {/* <ServiceDetail 
+            onBack={() => setCurrentPage("home")}
+            onBookNow={(service) => {
+              // Navigate to bookings page after booking
+              alert(`Booking ${service.name}. This would open a booking form in a real app.`);
+              setCurrentPage("bookings");
+            }}
+          /> */}
         {/* Protected pages */}
         <Route path="/profile" element={user ? <UserProfile user={user}/> : <Navigate to="/login" />} />
         <Route path="/bookings" element={user ? <BookingHistory /> : <Navigate to="/login" />} />

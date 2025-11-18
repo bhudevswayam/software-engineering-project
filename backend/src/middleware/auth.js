@@ -18,18 +18,21 @@ const protect = asyncHandler(async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    console.log(decoded);
     // Try finding in User
     let user = await User.findById(decoded.id);
-
+    
     // If not found, try Business
     if (!user) {
       user = await Business.findById(decoded.id);
     }
+    console.log(user);
+    
 
     
     if (!user) {
       res.status(401);
-      throw new Error('Not authorized, user not found');
+      throw new Error('Not authorized, user is not found');
     }
 
     // Allow normal users if tenantId matches OR if superadmin
@@ -41,8 +44,10 @@ const protect = asyncHandler(async (req, res, next) => {
     req.user = user; // attach user to request
     next();
   } catch (err) {
+    console.log(err);
+    
     res.status(401);
-    throw new Error('Not authorized, token invalid');
+    throw new Error('Not authorized, token is this the end invalid');
   }
 });
 

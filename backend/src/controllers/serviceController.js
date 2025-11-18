@@ -1,9 +1,10 @@
-const asyncHandler = require('express-async-handler');
-const Service = require('../models/Service');
-const Business = require('../models/Business');
+import asyncHandler from 'express-async-handler';
+import Service from '../models/Service.js';
+import Business from '../models/Business.js';
 // create a service (business role)
 const createService = asyncHandler(async (req, res) => {
-
+  console.log("This is header",req.headers);
+  
   const {
     name,
     category,
@@ -54,6 +55,23 @@ const createService = asyncHandler(async (req, res) => {
   res.status(201).json(service);
 });
 
+// @desc    Get all active services
+// @route   GET /api/services
+// @access  Public (or Protected, depending on your app)
+const listAllServices = asyncHandler(async (req, res) => {
+  try {
+    const services = await Service.find({ active: true })
+      .populate("business", "name email");
+
+    if (!services || services.length === 0) {
+      return res.status(404).json({ message: "No active services found" });
+    }
+
+    res.status(200).json(services);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 const listServices = asyncHandler(async (req, res) => {
   const tenantId = req.tenantId;
@@ -130,4 +148,47 @@ const deleteService = asyncHandler(async (req, res) => {
   res.json({ message: 'Service deactivated' });
 });
 
-module.exports = { createService, listServices, getService, updateService, deleteService };
+// ==============================
+// 🔹 Get All Services by business ID
+// ==============================
+
+const getServicesByBusinessFromServiceId = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1️⃣ Find the service by ID
+    const service = await Service.findById(id);
+    if (!service) {
+      return res.status(404).json({ success: false, message: "Service not found" });
+    }
+
+    // 2️⃣ Fetch all services under the same business ID
+    const services = await Service.find({
+      business: service.business,
+      active: true, // Optional: only active services
+    }).populate("business", "name email"); // include business details if needed
+
+    return res.status(200).json({
+      success: true,
+      count: services.length,
+      services,
+    });
+  } catch (error) {
+    console.error("Error fetching related services:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error fetching related services",
+    });
+  }
+};
+
+
+export {
+  createService,
+  listAllServices,
+  listServices,
+  getService,
+  updateService,
+  deleteService,
+  getServicesByBusinessFromServiceId
+};

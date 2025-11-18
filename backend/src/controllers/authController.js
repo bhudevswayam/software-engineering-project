@@ -122,6 +122,7 @@ const login = asyncHandler(async (req, res) => {
     name: user.name,
     email: user.email,
     role: user.role,
+    tenantId: user.tenantId,
     token: generateToken(user)
   });
 });
