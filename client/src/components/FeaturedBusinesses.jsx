@@ -17,37 +17,54 @@ export function FeaturedBusinesses() {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const services = await getAllServices(); // Fetch services from API
-        // Transform backend data to match UI structure if required
-        const formatted = services.map((service) => ({
+  const fetchData = async () => {
+    try {
+      const services = await getAllServices(); // Fetch services from API
+
+      const formatted = services.map((service) => {
+        let imageUrl = "https://via.placeholder.com/400x300?text=No+Image";
+
+        // ✅ Convert Buffer → Base64 → Data URL
+        if (service.images && service.images.length > 0 && service.images[0].data?.data) {
+          const bufferData = service.images[0].data.data; // the raw byte array
+          const base64String = btoa(
+            new Uint8Array(bufferData)
+              .reduce((data, byte) => data + String.fromCharCode(byte), "")
+          );
+          imageUrl = `data:${service.images[0].contentType};base64,${base64String}`;
+        }
+
+        return {
           id: service._id,
           name: service.name,
           category: service.category || "General",
-          location: service.city && service.state ? `${service.city}, ${service.state}` : "N/A",
-          price: service.priceRange ? `$${service.priceRange}` : "Pricing not available",
+          location:
+            service.city && service.state
+              ? `${service.city}, ${service.state}`
+              : "N/A",
+          price: service.priceRange
+            ? `$${service.priceRange}`
+            : "Pricing not available",
+          image: imageUrl, // ✅ use converted URL
+          rating: service.rating || 4.5,
+          reviewCount: service.reviewCount || 10,
+          responseTime: service.responseTime || "1 hour",
+          verified: service.business ? true : false,
+          specialties: service.specialties || [],
+        };
+      });
 
-          // Since these are not in backend yet, use placeholders
-          image: service.image || "https://via.placeholder.com/400x300?text=No+Image",
-          rating: service.rating || 4.5,      // dummy until you add ratings
-          reviewCount: service.reviewCount || 10, // dummy
-          responseTime: service.responseTime || "1 hour", // dummy
-          verified: service.business ? true : false, // assumes business = verified
-          specialties: service.specialties || [], // if not available, empty array
-        }));
+      setFeaturedBusinesses(formatted);
+    } catch (error) {
+      console.error("Error fetching services:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  fetchData();
+}, []);
 
-        setFeaturedBusinesses(formatted);
-      } catch (error) {
-        console.error("Error fetching services:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   if (loading) return <p>Loading...</p>;
 

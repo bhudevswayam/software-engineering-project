@@ -1,59 +1,78 @@
 import asyncHandler from 'express-async-handler';
 import Service from '../models/Service.js';
 import Business from '../models/Business.js';
+import multer from "multer";
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
 // create a service (business role)
-const createService = asyncHandler(async (req, res) => {
-  console.log("This is header",req.headers);
-  
-  const {
-    name,
-    category,
-    description,
-    addressLine1,
-    addressLine2,
-    city,
-    state,
-    zipCode,
-    phoneNumber,
-    email,
-    priceRange,
-    businessHours
-  } = req.body;
+const createService = [
+  upload.array("images"), // 'images' is the form field name for file uploads
+  asyncHandler(async (req, res) => {
+    console.log("Headers:", req.headers);
 
-  if (!name || !priceRange) {
-    res.status(400);
-    throw new Error('Missing required fields: name or priceRange');
-  }
-  const businessId = req.user._id;
-  // // find the business
-  const business = await Business.findById(businessId);
-  if (!business) {
-    res.status(404);
-    throw new Error("Business not found");
-  }
+    const {
+      name,
+      category,
+      description,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      zipCode,
+      phoneNumber,
+      email,
+      priceRange,
+      businessHours
+    } = req.body;
 
-  const service = await Service.create({
-    business: req.user._id,       // business owner
-    tenantId: req.user.tenantId,  // add tenantId from the logged-in business
-    name,
-    category,
-    description,
-    addressLine1,
-    addressLine2,
-    city,
-    state,
-    zipCode,
-    phoneNumber,
-    email,
-    priceRange,
-    businessHours
-  });
+    if (!name || !priceRange) {
+      res.status(400);
+      throw new Error("Missing required fields: name or priceRange");
+    }
 
-  business.services.push(service._id);
-  await business.save();
+    const businessId = req.user._id;
+    const business = await Business.findById(businessId);
 
-  res.status(201).json(service);
-});
+    if (!business) {
+      res.status(404);
+      throw new Error("Business not found");
+    }
+
+    // Convert uploaded files into image objects with buffer + contentType
+    const images = req.files?.map(file => ({
+      data: file.buffer,
+      contentType: file.mimetype,
+    })) || [];
+
+    const service = await Service.create({
+      business: req.user._id,      // business owner
+      tenantId: req.user.tenantId, // add tenantId from the logged-in business
+      name,
+      category,
+      description,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      zipCode,
+      phoneNumber,
+      email,
+      priceRange,
+      businessHours,
+      images, // save images in buffer form
+    });
+
+    business.services.push(service._id);
+    await business.save();
+
+    res.status(201).json({
+      message: "Service created successfully",
+      service,
+    });
+  }),
+];
 
 // @desc    Get all active services
 // @route   GET /api/services

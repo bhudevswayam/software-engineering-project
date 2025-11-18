@@ -17,6 +17,12 @@ const ServiceSchema = new mongoose.Schema({
   email: { type: String },
   priceRange: { type: Number },
   businessHours: { type: String },
+  images: [
+    {
+      data: Buffer,               
+      contentType: String,        
+    },
+  ],
 
   // Booking reference (optional, can be queried from Booking collection too)
   bookings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Booking" }],

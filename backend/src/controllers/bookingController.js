@@ -29,20 +29,31 @@ const createBooking = asyncHandler(async (req, res) => {
 // ✅ List all bookings for logged-in user
 const listBookings = asyncHandler(async (req, res) => {
   try {
-    const userId = req.user._id; // from JWT token
+    const userId = req.user._id;
+    const role = req.user.role; // assuming role is included in JWT
 
     if (!userId) {
       return res.status(400).json({ message: "User not authenticated" });
     }
 
-    // Find all bookings that belong to this user
-    const bookings = await Booking.find({ user: userId })
-      .populate("service", "name priceRange") // return only required service fields
-      .populate("business", "name email") // optional
-      .sort({ createdAt: -1 }); // latest first
+    let bookings;
+
+    if (role === "business") {
+      // 🏢 If logged in as business → show bookings for services that belong to this business
+      bookings = await Booking.find({ business: userId })
+        .populate("service", "name priceRange")
+        .populate("user", "name email phoneNo addressLine1 addressLine2 city state zipCode") // 👈 show user details who made the booking
+        .sort({ createdAt: -1 });
+    } else {
+      // 👤 If logged in as user → show only their own bookings
+      bookings = await Booking.find({ user: userId })
+        .populate("service", "name priceRange")
+        .populate("business", "name email") // show business info
+        .sort({ createdAt: -1 });
+    }
 
     if (!bookings || bookings.length === 0) {
-      return res.status(404).json({ message: "No bookings found for this user" });
+      return res.status(404).json({ message: "No bookings found" });
     }
 
     res.status(200).json(bookings);
@@ -51,7 +62,6 @@ const listBookings = asyncHandler(async (req, res) => {
     res.status(500).json({ message: "Server error fetching bookings" });
   }
 });
-
 
 const updateBookingStatus = asyncHandler(async (req, res) => {
   const booking = await Booking.findOne({ _id: req.params.id, tenantId: req.tenantId });

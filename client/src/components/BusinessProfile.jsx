@@ -4,7 +4,7 @@ import {
   createService,
   updateService,
   deleteService,
-} from "@/api/service"; // ✅ FIXED import path
+} from "@/api/service";
 import {
   Card,
   CardContent,
@@ -43,6 +43,7 @@ import {
   Star,
   Clock,
   DollarSign,
+  Image as ImageIcon,
 } from "lucide-react";
 
 const categories = [
@@ -63,6 +64,9 @@ export function BusinessProfile() {
   const [loading, setLoading] = useState(true);
   const [isAddingBusiness, setIsAddingBusiness] = useState(false);
   const [editingBusiness, setEditingBusiness] = useState(null);
+  const [selectedImages, setSelectedImages] = useState([]); // 👈 holds selected files
+  const [previewImages, setPreviewImages] = useState([]); // 👈 holds image preview URLs
+
   const [newBusiness, setNewBusiness] = useState({
     name: "",
     category: "",
@@ -78,39 +82,63 @@ export function BusinessProfile() {
     businessHours: "",
   });
 
-  // ✅ Fetch all businesses on mount
+  // ✅ Fetch all services on mount
   useEffect(() => {
     (async () => {
       try {
         const data = await getServices();
         setBusinesses(data);
       } catch (err) {
-        console.error("Failed to load businesses:", err);
+        console.error("Failed to load services:", err);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  // ✅ Add or update
+  // ✅ Handle image selection
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedImages(files);
+
+    // generate preview URLs
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setPreviewImages(previews);
+  };
+
+  // ✅ Create or update service
   const handleSaveBusiness = async () => {
     try {
-      const payload = {
-        ...newBusiness,
-        business: JSON.parse(localStorage.getItem("user"))?.id || "", 
-        tenantId: localStorage.getItem("x-tenant-id"),
-      };
+      const formData = new FormData();
 
+      Object.entries(newBusiness).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
+      // append tenant and business IDs
+      formData.append(
+        "business",
+        JSON.parse(localStorage.getItem("user"))?.id || ""
+      );
+      formData.append("tenantId", localStorage.getItem("x-tenant-id"));
+
+      // append image files
+      selectedImages.forEach((file) => {
+        formData.append("images", file);
+      });
+
+      let result;
       if (editingBusiness) {
-        const updated = await updateService(editingBusiness._id, payload);
+        result = await updateService(editingBusiness._id, formData, true); // ✅ pass formData flag
         setBusinesses((prev) =>
-          prev.map((b) => (b._id === editingBusiness._id ? updated : b))
+          prev.map((b) => (b._id === editingBusiness._id ? result : b))
         );
       } else {
-        const created = await createService(payload);
-        setBusinesses((prev) => [...prev, created]);
+        result = await createService(formData, true); // ✅ pass formData flag
+        setBusinesses((prev) => [...prev, result]);
       }
 
+      // reset form
       setIsAddingBusiness(false);
       setEditingBusiness(null);
       setNewBusiness({
@@ -127,14 +155,16 @@ export function BusinessProfile() {
         priceRange: "",
         businessHours: "",
       });
+      setSelectedImages([]);
+      setPreviewImages([]);
     } catch (err) {
-      console.error("Failed to save business:", err);
+      console.error("Failed to save service:", err);
     }
   };
 
-  // ✅ Delete
+  // ✅ Delete service
   const handleDeleteBusiness = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this business?")) return;
+    if (!window.confirm("Are you sure you want to delete this service?")) return;
     try {
       await deleteService(id);
       setBusinesses((prev) => prev.filter((b) => b._id !== id));
@@ -158,7 +188,7 @@ export function BusinessProfile() {
   if (loading) {
     return (
       <div className="text-center py-20">
-        <p>Loading businesses...</p>
+        <p>Loading services...</p>
       </div>
     );
   }
@@ -168,36 +198,60 @@ export function BusinessProfile() {
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl mb-2">Manage Business</h1>
+            <h1 className="text-3xl mb-2">Manage Services</h1>
             <p className="text-muted-foreground">
-              Add, edit, and manage your business listings
+              Add, edit, and manage your service listings
             </p>
           </div>
 
-          {/* Add Business Dialog */}
+          {/* Add/Edit Dialog */}
           <Dialog open={isAddingBusiness} onOpenChange={setIsAddingBusiness}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Business
+                Add Service
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
-                  {editingBusiness ? "Edit Business" : "Add New Business"}
+                  {editingBusiness ? "Edit Service" : "Add New Service"}
                 </DialogTitle>
                 <DialogDescription>
                   {editingBusiness
-                    ? "Update your business information"
-                    : "Create a new business listing"}
+                    ? "Update your service details"
+                    : "Create a new service listing"}
                 </DialogDescription>
               </DialogHeader>
 
               {/* ✅ Form Fields */}
               <div className="grid gap-4 py-4">
+                {/* Image Upload Field */}
+                <div className="space-y-2">
+                  <Label>Service Images</Label>
+                  <Input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                  {previewImages.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {previewImages.map((src, i) => (
+                        <img
+                          key={i}
+                          src={src}
+                          alt={`preview-${i}`}
+                          className="w-20 h-20 object-cover rounded-md border"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Other Input Fields */}
                 {[
-                  { id: "name", label: "Business Name *" },
+                  { id: "name", label: "Service Name *" },
                   { id: "category", label: "Category", select: true },
                   { id: "description", label: "Description", textarea: true },
                   { id: "addressLine1", label: "Address Line 1" },
@@ -240,7 +294,7 @@ export function BusinessProfile() {
                             [field.id]: e.target.value,
                           })
                         }
-                        placeholder="Describe your business"
+                        placeholder="Describe your service"
                         rows={3}
                       />
                     ) : (
@@ -263,25 +317,25 @@ export function BusinessProfile() {
 
               <DialogFooter>
                 <Button onClick={handleSaveBusiness}>
-                  {editingBusiness ? "Update Business" : "Create Business"}
+                  {editingBusiness ? "Update Service" : "Create Service"}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
 
-        {/* ✅ Business List */}
+        {/* ✅ Display Services */}
         {businesses.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No businesses yet</h3>
+              <h3 className="text-lg font-medium mb-2">No services yet</h3>
               <p className="text-muted-foreground mb-4">
-                Create your first business listing to start receiving bookings
+                Create your first service to start receiving bookings
               </p>
               <Button onClick={() => setIsAddingBusiness(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Your First Business
+                Add Your First Service
               </Button>
             </CardContent>
           </Card>
@@ -335,6 +389,25 @@ export function BusinessProfile() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
+                      {/* ✅ Display service images */}
+                      {b.images && b.images.length > 0 ? (
+                        <div className="flex gap-2">
+                          {b.images.map((img, i) => (
+                            <img
+                              key={i}
+                              src={`/api/services/${b._id}/image/${i}`}
+                              alt="service"
+                              className="w-24 h-24 object-cover rounded-md border"
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-gray-500 text-sm">
+                          <ImageIcon className="h-4 w-4 mr-1" />
+                          No images
+                        </div>
+                      )}
+
                       <p className="text-gray-600">{b.description}</p>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center space-x-2">
