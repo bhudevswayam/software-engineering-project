@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getAllBookings } from "../api/bookings"; // adjust if path differs
+import { getAllBookings, updateBookingStatus  } from "../api/bookings"; // adjust if path differs
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -11,6 +11,7 @@ export function BookingHistory() {
   const [bookings, setBookings] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [editingStatus, setEditingStatus] = useState({});
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const role = storedUser.role || "user";
   
@@ -62,20 +63,6 @@ export function BookingHistory() {
 }, [role]);
 
 
-  // ✅ Status Badge Styling
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "upcoming":
-        return "bg-blue-100 text-blue-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   // ✅ Filter + Search Logic
   const filteredBookings = bookings.filter((booking) => {
     const matchesSearch =
@@ -86,6 +73,52 @@ export function BookingHistory() {
 
     return matchesSearch && matchesStatus;
   });
+
+  // Edit Booking Status Handler
+  const handleStatusUpdate = async (id) => {
+    const newStatus = editingStatus[id];
+    if (!newStatus) return;
+    try {
+      await updateBookingStatus(id, newStatus);
+
+      // Update UI instantly
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === id ? { ...b, status: newStatus } : b
+        )
+      );
+
+      // Remove from editing state
+      setEditingStatus((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
+
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    }
+  };
+
+  const getStatusBadgeVariant = (status) => {
+    switch (status) {
+      case "pending":
+        return { variant: "secondary", className: "" };
+
+      case "confirmed":
+        return { variant: "default", className: "" };
+
+      case "completed":
+        return { variant: "outline", className: "text-green-700 border-green-300" };
+
+      case "cancelled":
+        return { variant: "destructive", className: "" };
+
+      default:
+        return { variant: "secondary", className: "" };
+    }
+  };
+
 
   return (
   <div className="container mx-auto px-4 py-8">
@@ -139,9 +172,14 @@ export function BookingHistory() {
                     <h3 className="text-lg font-medium">
                       {role === "business" ? booking.clientName : booking.serviceName}
                     </h3>
-                    <Badge className={getStatusColor(booking.status)}>
-                      {booking.status}
-                    </Badge>
+                    {(() => {
+                      const { variant, className } = getStatusBadgeVariant(booking.status);
+                      return (
+                        <Badge variant={variant} className={className}>
+                          {booking.status}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                   <div className="text-right text-xl font-semibold">
                     ${booking.price}
@@ -170,10 +208,48 @@ export function BookingHistory() {
                     ? `Client Email: ${booking.clientEmail} | Phone: ${booking.clientPhone}`
                     : booking.description}
                 </p>
+                <div className="flex justify-between items-center mt-4">
 
-                <div className="flex justify-end">
-                  <Button size="sm" variant="outline">View Details</Button>
-                </div>
+  {/* LEFT SIDE — Edit Status (Business only) */}
+  {role === "business" && (
+    <div className="flex items-center gap-2">
+
+      {/* Status Dropdown */}
+      <Select
+        value={editingStatus[booking.id] || booking.status}
+        onValueChange={(v) =>
+          setEditingStatus((prev) => ({ ...prev, [booking.id]: v }))
+        }
+      >
+        <SelectTrigger className="w-40">
+          <SelectValue placeholder="Change Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="pending">Pending</SelectItem>
+          <SelectItem value="confirmed">Confirmed</SelectItem>
+          <SelectItem value="completed">Completed</SelectItem>
+          <SelectItem value="cancelled">Cancelled</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {/* Save Button */}
+      <Button
+        size="sm"
+        onClick={() => handleStatusUpdate(booking.id)}
+        disabled={
+          !editingStatus[booking.id] ||
+          editingStatus[booking.id] === booking.status
+        }
+      >
+        Save
+      </Button>
+    </div>
+  )}
+
+  {/* RIGHT SIDE — View Details */}
+  <Button size="sm" variant="outline">View Details</Button>
+</div>
+
               </CardContent>
             </Card>
           ))
@@ -193,7 +269,7 @@ export function BookingHistory() {
         <Card>
           <CardContent className="pt-6 text-center">
             <div className="text-2xl font-semibold text-blue-600">
-              {bookings.filter((b) => b.status === "upcoming").length}
+              {bookings.filter((b) => b.status === "confirmed").length}
             </div>
             <p className="text-sm text-muted-foreground">Upcoming Bookings</p>
           </CardContent>

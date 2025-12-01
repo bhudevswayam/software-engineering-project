@@ -64,7 +64,11 @@ const listBookings = asyncHandler(async (req, res) => {
 });
 
 const updateBookingStatus = asyncHandler(async (req, res) => {
-  const booking = await Booking.findOne({ _id: req.params.id, tenantId: req.tenantId });
+  console.log("this is ->",req.params.id);
+  
+  const booking = await Booking.findOne({ _id: req.params.id});
+  console.log(booking);
+  
   if (!booking) { res.status(404); throw new Error('Booking not found'); }
 
   // only business (owner) or superadmin can change status
