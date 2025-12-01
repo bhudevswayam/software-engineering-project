@@ -8,12 +8,13 @@ import { Footer } from "./components/Footer";
 import { UserProfile } from "./components/UserProfile";
 import { BookingHistory } from "./components/BookingHistory";
 import { BusinessProfile } from "./components/BusinessProfile";
-import  Login  from "./components/Login";      // 👈 add login component
+import Login from "./components/Login";      // 👈 add login component
 import { Register } from "./components/Register"; // 👈 add register component
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";  // 👈 use auth context
 import { RegisterBusiness } from "./components/RegisterBusiness";
-import ServiceDetail from './components/ServiceDetail';
+import ServiceDetail from "./components/ServiceDetail";
+import { PaymentPortal } from "./components/PaymentPortal";
 
 export default function App() {
   const { user, loading, logoutUser } = useAuth();
@@ -23,26 +24,59 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <Header user={user} onLogout={logoutUser} />
-      
+
       <Routes>
         {/* Public pages */}
-        <Route path="/" element={
-          <>
-            <Hero />
-            <ServiceCategories />
-            <FeaturedBusinesses />
-            <HowItWorks />
-          </>
-        } />
-        <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
-        <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
-        <Route path="/register-business" element={user ? <Navigate to="/" /> : <RegisterBusiness />} />
+        <Route
+          path="/"
+          element={
+            <>
+              <Hero />
+              <ServiceCategories />
+              <FeaturedBusinesses />
+              <HowItWorks />
+            </>
+          }
+        />
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/" /> : <Login />}
+        />
+        <Route
+          path="/register"
+          element={user ? <Navigate to="/" /> : <Register />}
+        />
+        <Route
+          path="/register-business"
+          element={user ? <Navigate to="/" /> : <RegisterBusiness />}
+        />
         <Route path="/service-detail/:id" element={<ServiceDetail />} />
 
         {/* Protected pages */}
-        <Route path="/profile" element={user ? <UserProfile user={user}/> : <Navigate to="/login" />} />
-        <Route path="/bookings" element={user ? <BookingHistory /> : <Navigate to="/login" />} />
-        <Route path="/business" element={user?.role == "business" ? <BusinessProfile /> : <Navigate to="/" />} />
+        <Route
+          path="/profile"
+          element={
+            user ? <UserProfile user={user} /> : <Navigate to="/login" />
+          }
+        />
+        <Route
+          path="/bookings"
+          element={user ? <BookingHistory /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/business"
+          element={
+            user?.role == "business" ? (
+              <BusinessProfile />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+        <Route
+          path="/payment"
+          element={user ? <PaymentPortal /> : <Navigate to="/login" />}
+        />
 
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" />} />
