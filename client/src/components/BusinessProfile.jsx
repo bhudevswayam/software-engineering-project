@@ -389,25 +389,6 @@ export function BusinessProfile() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                      {/* ✅ Display service images */}
-                      {b.images && b.images.length > 0 ? (
-                        <div className="flex gap-2">
-                          {b.images.map((img, i) => (
-                            <img
-                              key={i}
-                              src={`/api/services/${b._id}/image/${i}`}
-                              alt="service"
-                              className="w-24 h-24 object-cover rounded-md border"
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex items-center text-gray-500 text-sm">
-                          <ImageIcon className="h-4 w-4 mr-1" />
-                          No images
-                        </div>
-                      )}
-
                       <p className="text-gray-600">{b.description}</p>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center space-x-2">
