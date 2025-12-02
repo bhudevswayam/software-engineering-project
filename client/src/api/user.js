@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const BASE_URL = "http://localhost:4000/api";
-const tenantId = localStorage.getItem("tenantId") || "2";
+const tenantId = localStorage.getItem("x-tenant-id") || "";
 const token = localStorage.getItem("token");
 const getTokenHeader = () => ({
   headers: {

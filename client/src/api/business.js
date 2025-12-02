@@ -1,12 +1,12 @@
 import axios from "axios";
 
 const BASE_URL = "http://localhost:4000/api";
-const tenantId = localStorage.getItem("tenantId") || "";
+const tenantId = localStorage.getItem("x-tenant-id") || "";
 
 const getTokenHeader = () => ({
   headers: {
     Authorization: `Bearer ${localStorage.getItem("token")}`,
-    "x-tenant-id": localStorage.getItem("tenantId") || "",
+    "x-tenant-id": localStorage.getItem("x-tenant-id") || "",
   },
 });
 

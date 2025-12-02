@@ -31,7 +31,7 @@ export function RegisterBusiness({ onSuccess }) {
         const data  = await registerBusiness(form) 
         
         await login({ email: form.email, password: form.password }); // update auth context with user + token
-        loginUser(data);
+        alert("Business registered successfully!");
         navigate("/"); // redirect home
       } catch (err) {
         console.log(err)

@@ -26,7 +26,7 @@ export const getProfile = async (token) => {
   const res = await axios.get(`${BASE_URL}/users/profile`, {
     headers: { 
       Authorization: `Bearer ${token}`,
-      "x-tenant-id": localStorage.getItem("tenantId") || "",
+      "x-tenant-id": localStorage.getItem("x-tenant-id") || "",
     },
   });
   return res.data;

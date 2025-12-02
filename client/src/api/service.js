@@ -16,6 +16,8 @@ const getTokenHeader = () => ({
 // 🔹 Create Service
 // ==============================
 export const createService = async (data) => {
+  console.log("this is",getTokenHeader);
+  
   const res = await axios.post(`${BASE_URL}/services`, data, getTokenHeader());
   return res.data;
 };

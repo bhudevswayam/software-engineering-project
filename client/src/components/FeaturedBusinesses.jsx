@@ -63,7 +63,7 @@ export function FeaturedBusinesses() {
   };
 
   fetchData();
-}, []);
+}, [featuredBusinesses]);
 
 
   if (loading) return <p>Loading...</p>;

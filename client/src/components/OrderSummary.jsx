@@ -11,8 +11,12 @@ import {
 import { Card } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { Avatar, AvatarFallback } from "./ui/avatar";
+import { getServiceById } from "../api/service";
 
 export function OrderSummary({ booking, service, date, time }) {
+  // const services = await getRelatedServices(id);
+  console.log(service);
+  
   const bookingDate =
     date ? new Date(date) : booking && booking.start ? new Date(booking.start) : null;
 
@@ -42,18 +46,19 @@ export function OrderSummary({ booking, service, date, time }) {
   const location =
     (booking &&
       booking.business &&
-      (booking.business.address || booking.business.location)) ||
+      (booking.business.address || service.serviceArea)) ||
     "123 Main Street, New York, NY";
 
   const baseAmount =
-    booking && typeof booking.price === "number" ? booking.price : 120;
+    booking && typeof booking.price === "number" ? Number(service?.pricing?.[0]?.price) : 120;
 
   const serviceFee = 12;
   const tax = 10.56;
   const total = (baseAmount + serviceFee + tax).toFixed(2);
 
   const providerName =
-    (booking && booking.business && booking.business.name) ||
+    booking?.business?.name ||
+    service?.provider?.name ||
     "John Doe Cleaning";
 
   const providerInitials = providerName
